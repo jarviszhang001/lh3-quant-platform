@@ -1,0 +1,147 @@
+sequenceDiagram
+    %% Main actors
+    actor User
+    participant UI as UI Interface
+    participant DM as DataModule
+    participant SM as StrategyModule
+    participant BM as BacktestModule
+    participant PM as PortfolioModule
+    participant VM as VisualizationModule
+    
+    %% Data retrieval and processing workflow
+    Note over User,VM: Workflow 1: Data Retrieval and Processing
+    User->>UI: Request market data
+    UI->>DM: get_data_source("AKShare")
+    DM-->>UI: Return AKShareDataSource
+    UI->>DM: fetch_stock_data(code, start_date, end_date)
+    DM->>DM: Check cache for data
+    alt Data exists in cache
+        DM->>DM: get_cached_data(key)
+    else Data not in cache
+        DM->>DM: _call_api("stock_zh_a_hist", params)
+        DM->>DM: _preprocess_data(raw_data)
+        DM->>DM: cache_data(key, processed_data)
+    end
+    DM-->>UI: Return processed DataFrame
+    UI->>DM: calculate_technical_indicators(data, indicators)
+    DM->>DM: Process indicators
+    DM-->>UI: Return data with indicators
+    UI->>VM: create_data_chart(data, config)
+    VM->>VM: Create TimeSeriesChart
+    VM-->>UI: Return chart object
+    UI-->>User: Display data visualization
+    
+    %% Strategy development workflow
+    Note over User,VM: Workflow 2: Strategy Development
+    User->>UI: Create new strategy
+    UI->>SM: create_strategy(strategy_type, initial_params)
+    SM->>SM: Instantiate strategy object
+    SM-->>UI: Return strategy object
+    User->>UI: Configure strategy parameters
+    UI->>SM: set_parameters(params)
+    SM->>SM: Update strategy configuration
+    SM-->>UI: Confirm parameters set
+    User->>UI: Request data for strategy testing
+    UI->>DM: fetch_market_data(data_type, params)
+    DM-->>UI: Return market data
+    UI->>SM: generate_signals(data)
+    SM->>SM: Apply strategy logic
+    SM-->>UI: Return signals DataFrame
+    UI->>VM: create_chart(signals, config)
+    VM-->>UI: Return signal chart
+    UI-->>User: Display strategy signals
+    User->>UI: Save strategy
+    UI->>SM: save_strategy(strategy)
+    SM->>SM: Persist strategy to storage
+    SM-->>UI: Confirm strategy saved
+    UI-->>User: Confirm strategy saved
+    
+    %% Backtesting workflow
+    Note over User,VM: Workflow 3: Backtesting Execution
+    User->>UI: Start backtest
+    UI->>BM: create_backtest(config)
+    BM->>BM: Initialize Backtest object
+    BM-->>UI: Return backtest object
+    UI->>SM: load_strategy(strategy_id)
+    SM-->>UI: Return strategy object
+    UI->>DM: fetch_stock_data(stocks, start_date, end_date)
+    DM-->>UI: Return historical data
+    UI->>BM: set_strategy(strategy)
+    BM-->>UI: Confirm strategy set
+    UI->>BM: set_data(data)
+    BM-->>UI: Confirm data set
+    UI->>BM: run_backtest()
+    BM->>BM: Process strategy signals
+    BM->>BM: Simulate trades with trading rules
+    BM->>BM: Calculate performance metrics
+    BM->>BM: Generate BacktestResult
+    BM-->>UI: Return backtest results
+    UI->>VM: create_backtest_chart(result, config)
+    VM->>VM: Generate performance charts
+    VM-->>UI: Return visualization
+    UI-->>User: Display backtest results
+    User->>UI: Save backtest result
+    UI->>BM: save_backtest_result(result)
+    BM-->>UI: Confirm result saved
+    UI-->>User: Confirm result saved
+    
+    %% Portfolio analysis workflow
+    Note over User,VM: Workflow 4: Portfolio Management
+    User->>UI: Create portfolio
+    UI->>PM: create_portfolio(name, initial_capital)
+    PM->>PM: Initialize Portfolio object
+    PM-->>UI: Return portfolio object
+    User->>UI: Add positions from backtest
+    UI->>BM: load_backtest_result(result_id)
+    BM-->>UI: Return backtest result
+    UI->>PM: add_positions(positions)
+    PM-->>UI: Confirm positions added
+    User->>UI: Run risk analysis
+    UI->>PM: analyze_portfolio(portfolio)
+    PM->>PM: Calculate risk metrics
+    PM-->>UI: Return risk analysis
+    UI->>VM: create_portfolio_chart(analysis, config)
+    VM-->>UI: Return risk charts
+    UI-->>User: Display risk analysis
+    User->>UI: Optimize portfolio
+    UI->>PM: optimize_portfolio(portfolio, constraints)
+    PM->>PM: Run optimization algorithm
+    PM-->>UI: Return optimized allocation
+    UI->>VM: create_chart(allocation, config)
+    VM-->>UI: Return allocation chart
+    UI-->>User: Display optimized portfolio
+    
+    %% System initialization
+    Note over User,VM: Workflow 5: System Initialization
+    User->>UI: Launch application
+    UI->>DM: initialize()
+    DM->>DM: Register data sources
+    DM-->>UI: Confirm initialization
+    UI->>SM: initialize()
+    SM->>SM: Load strategy templates
+    SM-->>UI: Confirm initialization
+    UI->>BM: initialize()
+    BM->>BM: Configure backtesting engine
+    BM-->>UI: Confirm initialization
+    UI->>PM: initialize()
+    PM->>PM: Setup risk models
+    PM-->>UI: Confirm initialization
+    UI->>VM: initialize()
+    VM->>VM: Register chart templates
+    VM-->>UI: Confirm initialization
+    UI-->>User: Application ready
+    
+    %% Report generation workflow
+    Note over User,VM: Workflow 6: Report Generation
+    User->>UI: Request strategy report
+    UI->>BM: load_backtest_result(result_id)
+    BM-->>UI: Return backtest result
+    UI->>PM: analyze_portfolio(result.positions)
+    PM-->>UI: Return risk analysis
+    UI->>VM: export_report(data, template)
+    VM->>VM: Generate Report object
+    VM->>VM: Add sections with backtest data
+    VM->>VM: Add performance charts
+    VM->>VM: Generate report file
+    VM-->>UI: Return report file
+    UI-->>User: Download report

@@ -1,0 +1,208 @@
+{
+  "title": "AKShare Quantitative Analysis Platform - Class Diagram",
+  "modules": {
+    "Core": {
+      "System": {
+        "attributes": ["components: dict"],
+        "methods": ["initialize()", "start()", "stop()"]
+      }
+    },
+    "Data": {
+      "DataModule": {
+        "attributes": [],
+        "methods": ["initialize()", "get_data_sources()", "register_data_source(source)"]
+      },
+      "DataSource": {
+        "attributes": ["name", "description", "category"],
+        "methods": ["get_metadata()", "fetch_data(params)"],
+        "type": "abstract"
+      },
+      "AKShareDataSource": {
+        "attributes": ["api_mapping", "cache_manager"],
+        "methods": ["fetch_stock_data(code, start_date, end_date)", "fetch_index_data(code, start_date, end_date)", "fetch_fundamental_data(code, report_type)", "fetch_market_data(data_type, params)"],
+        "inherits": "DataSource"
+      },
+      "DataProcessor": {
+        "attributes": [],
+        "methods": ["clean_data(data)", "normalize_data(data)", "calculate_technical_indicators(data, indicators)", "resample_data(data, freq)", "handle_missing_values(data, method)", "adjust_for_corporate_actions(data)"]
+      },
+      "CacheManager": {
+        "attributes": ["cache_store", "db_connection"],
+        "methods": ["get_cached_data(key)", "cache_data(key, data, ttl)", "invalidate_cache(key)", "refresh_cache(key)"]
+      }
+    },
+    "Strategy": {
+      "StrategyModule": {
+        "attributes": [],
+        "methods": ["initialize()", "get_strategies()", "create_strategy(strategy_type, params)", "save_strategy(strategy)", "load_strategy(strategy_id)", "delete_strategy(strategy_id)"]
+      },
+      "Strategy": {
+        "attributes": ["strategy_id", "name", "description", "parameters", "data_requirements"],
+        "methods": ["initialize(params)", "generate_signals(data)", "get_parameters()", "set_parameters(params)", "validate()"],
+        "type": "abstract"
+      },
+      "TechnicalStrategy": {
+        "attributes": ["indicators", "rules"],
+        "methods": ["add_indicator(name, params)", "add_rule(condition, action)", "generate_signals(data)"],
+        "inherits": "Strategy"
+      },
+      "FactorStrategy": {
+        "attributes": ["factors", "weighting_scheme", "rebalance_frequency"],
+        "methods": ["add_factor(factor, weight)", "remove_factor(factor_name)", "set_weighting_scheme(scheme, params)", "generate_signals(data)"],
+        "inherits": "Strategy"
+      },
+      "StatArbitrageStrategy": {
+        "attributes": ["pairs", "model", "entry_threshold", "exit_threshold"],
+        "methods": ["set_pairs(pairs)", "set_model(model_type, params)", "generate_signals(data)"],
+        "inherits": "Strategy"
+      },
+      "EventDrivenStrategy": {
+        "attributes": ["events", "event_window", "filters"],
+        "methods": ["add_event(event_type, params)", "set_event_window(pre_days, post_days)", "add_filter(filter_name, params)", "generate_signals(data)"],
+        "inherits": "Strategy"
+      },
+      "MLStrategy": {
+        "attributes": ["model_type", "features", "target", "trained_model"],
+        "methods": ["set_model(model_type, params)", "add_features(features)", "train(training_data)", "generate_signals(data)"],
+        "inherits": "Strategy"
+      },
+      "Factor": {
+        "attributes": [],
+        "methods": ["calculate(data)", "get_metadata()"],
+        "type": "interface"
+      }
+    },
+    "Backtesting": {
+      "BacktestModule": {
+        "attributes": [],
+        "methods": ["initialize()", "create_backtest(config)", "run_backtest(backtest)", "save_backtest_result(result)", "load_backtest_result(result_id)"]
+      },
+      "Backtest": {
+        "attributes": ["id", "strategy", "data", "start_date", "end_date", "initial_capital", "trading_rules", "position_sizer"],
+        "methods": ["set_data(data)", "set_strategy(strategy)", "set_parameters(params)", "run()"]
+      },
+      "TradingRules": {
+        "attributes": ["market_type", "commission_model", "slippage_model", "trading_calendar", "price_limits", "trading_constraints"],
+        "methods": ["validate_trade(trade)", "apply_constraints(trades)", "calculate_costs(trade)"]
+      },
+      "BacktestResult": {
+        "attributes": ["id", "strategy_id", "performance_metrics", "trade_log", "equity_curve", "positions_history"],
+        "methods": ["calculate_metrics()", "get_equity_curve()", "get_trade_log()", "get_drawdowns()", "get_annual_returns()", "to_report()"]
+      },
+      "TradeLog": {
+        "attributes": ["trades"],
+        "methods": ["get_trades()", "get_win_rate()", "get_profit_factor()", "get_average_trade()", "get_max_consecutive_losses()"]
+      }
+    },
+    "Portfolio": {
+      "PortfolioModule": {
+        "attributes": [],
+        "methods": ["initialize()", "create_portfolio(name, initial_capital)", "optimize_portfolio(portfolio, constraints)", "analyze_portfolio(portfolio)"]
+      },
+      "Portfolio": {
+        "attributes": ["id", "name", "holdings", "cash", "initial_capital"],
+        "methods": ["add_position(symbol, quantity, price)", "remove_position(symbol, quantity, price)", "get_value(price_data)", "get_allocation()", "get_performance(price_data)", "rebalance(target_allocation, price_data)"]
+      },
+      "RiskAnalyzer": {
+        "attributes": [],
+        "methods": ["calculate_volatility(returns)", "calculate_var(returns, confidence)", "calculate_cvar(returns, confidence)", "calculate_beta(returns, benchmark)", "calculate_correlation_matrix(returns)", "calculate_drawdowns(equity_curve)"]
+      },
+      "PortfolioOptimizer": {
+        "attributes": ["method", "parameters"],
+        "methods": ["set_method(method, parameters)", "optimize(returns, constraints)"]
+      }
+    },
+    "Visualization": {
+      "VisualizationModule": {
+        "attributes": [],
+        "methods": ["initialize()", "create_data_chart(data, config)", "create_backtest_chart(result, config)", "create_portfolio_chart(portfolio, config)", "export_report(data, template)"]
+      },
+      "Chart": {
+        "attributes": ["chart_id", "title", "data", "config"],
+        "methods": ["render()", "update_data(data)", "update_config(config)", "export(format)"],
+        "type": "abstract"
+      },
+      "TimeSeriesChart": {
+        "attributes": ["x_axis", "y_axis", "indicators"],
+        "methods": ["add_indicator(name, data, config)", "add_event_marker(date, description, config)", "render()"],
+        "inherits": "Chart"
+      },
+      "PerformanceChart": {
+        "attributes": ["metrics", "benchmarks"],
+        "methods": ["add_benchmark(name, data)", "set_metrics(metrics)", "render()"],
+        "inherits": "Chart"
+      },
+      "Report": {
+        "attributes": ["sections", "metadata"],
+        "methods": ["add_section(title, content)", "add_chart(chart)", "add_table(table)", "set_metadata(metadata)", "generate()"]
+      }
+    },
+    "UI": {
+      "UIModule": {
+        "attributes": [],
+        "methods": ["initialize()", "register_component(name, component)", "get_component(name)", "render_dashboard(config)"]
+      },
+      "UIComponent": {
+        "attributes": [],
+        "methods": ["render()", "handle_event(event)"],
+        "type": "interface"
+      },
+      "DataBrowser": {
+        "attributes": ["data_sources", "filters", "current_data"],
+        "methods": ["set_data_source(source)", "set_filters(filters)", "refresh_data()", "export_data(format)", "render()", "handle_event(event)"],
+        "inherits": "UIComponent"
+      },
+      "StrategyBuilder": {
+        "attributes": ["strategy_types", "current_strategy", "parameters"],
+        "methods": ["create_strategy(type)", "update_parameters(params)", "validate_strategy()", "save_strategy()", "load_strategy(strategy_id)", "render()", "handle_event(event)"],
+        "inherits": "UIComponent"
+      },
+      "BacktestRunner": {
+        "attributes": ["backtest_module", "current_backtest", "backtest_config"],
+        "methods": ["set_strategy(strategy)", "set_data(data)", "set_config(config)", "run_backtest()", "render()", "handle_event(event)"],
+        "inherits": "UIComponent"
+      },
+      "PortfolioManager": {
+        "attributes": ["portfolio_module", "current_portfolio", "price_data"],
+        "methods": ["create_portfolio(name, capital)", "update_portfolio(updates)", "analyze_portfolio()", "optimize_portfolio(constraints)", "render()", "handle_event(event)"],
+        "inherits": "UIComponent"
+      }
+    }
+  },
+  "relationships": [
+    {"from": "System", "to": "DataModule", "type": "composition", "cardinality": "1:1"},
+    {"from": "System", "to": "StrategyModule", "type": "composition", "cardinality": "1:1"},
+    {"from": "System", "to": "BacktestModule", "type": "composition", "cardinality": "1:1"},
+    {"from": "System", "to": "PortfolioModule", "type": "composition", "cardinality": "1:1"},
+    {"from": "System", "to": "VisualizationModule", "type": "composition", "cardinality": "1:1"},
+    {"from": "System", "to": "UIModule", "type": "composition", "cardinality": "1:1"},
+    {"from": "DataModule", "to": "DataSource", "type": "composition", "cardinality": "1:*"},
+    {"from": "DataSource", "to": "AKShareDataSource", "type": "inheritance"},
+    {"from": "AKShareDataSource", "to": "DataProcessor", "type": "association", "cardinality": "1:1"},
+    {"from": "AKShareDataSource", "to": "CacheManager", "type": "association", "cardinality": "1:1"},
+    {"from": "StrategyModule", "to": "Strategy", "type": "composition", "cardinality": "1:*"},
+    {"from": "Strategy", "to": "TechnicalStrategy", "type": "inheritance"},
+    {"from": "Strategy", "to": "FactorStrategy", "type": "inheritance"},
+    {"from": "Strategy", "to": "StatArbitrageStrategy", "type": "inheritance"},
+    {"from": "Strategy", "to": "EventDrivenStrategy", "type": "inheritance"},
+    {"from": "Strategy", "to": "MLStrategy", "type": "inheritance"},
+    {"from": "FactorStrategy", "to": "Factor", "type": "composition", "cardinality": "1:*"},
+    {"from": "BacktestModule", "to": "Backtest", "type": "composition", "cardinality": "1:*"},
+    {"from": "Backtest", "to": "Strategy", "type": "association", "cardinality": "1:1"},
+    {"from": "Backtest", "to": "TradingRules", "type": "association", "cardinality": "1:1"},
+    {"from": "Backtest", "to": "BacktestResult", "type": "composition", "cardinality": "1:1"},
+    {"from": "BacktestResult", "to": "TradeLog", "type": "composition", "cardinality": "1:1"},
+    {"from": "PortfolioModule", "to": "Portfolio", "type": "composition", "cardinality": "1:*"},
+    {"from": "PortfolioModule", "to": "RiskAnalyzer", "type": "composition", "cardinality": "1:1"},
+    {"from": "PortfolioModule", "to": "PortfolioOptimizer", "type": "composition", "cardinality": "1:1"},
+    {"from": "VisualizationModule", "to": "Chart", "type": "composition", "cardinality": "1:*"},
+    {"from": "Chart", "to": "TimeSeriesChart", "type": "inheritance"},
+    {"from": "Chart", "to": "PerformanceChart", "type": "inheritance"},
+    {"from": "VisualizationModule", "to": "Report", "type": "composition", "cardinality": "1:*"},
+    {"from": "UIModule", "to": "UIComponent", "type": "composition", "cardinality": "1:*"},
+    {"from": "UIComponent", "to": "DataBrowser", "type": "inheritance"},
+    {"from": "UIComponent", "to": "StrategyBuilder", "type": "inheritance"},
+    {"from": "UIComponent", "to": "BacktestRunner", "type": "inheritance"},
+    {"from": "UIComponent", "to": "PortfolioManager", "type": "inheritance"}
+  ]
+}

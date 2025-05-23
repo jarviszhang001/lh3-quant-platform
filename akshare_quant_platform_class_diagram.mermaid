@@ -1,0 +1,440 @@
+classDiagram
+    %% Core System Classes
+    class System {
+        <<main>>
+        -components: dict
+        +initialize()
+        +start()
+        +stop()
+    }
+    
+    %% Data Module
+    class DataModule {
+        <<module>>
+        +initialize()
+        +get_data_sources() List~DataSource~
+        +register_data_source(source: DataSource)
+    }
+    
+    class DataSource {
+        <<abstract>>
+        #name: str
+        #description: str
+        #category: str
+        +get_metadata() dict
+        +fetch_data(params: dict) DataFrame
+    }
+    
+    class AKShareDataSource {
+        -api_mapping: dict
+        -cache_manager: CacheManager
+        +fetch_stock_data(code: str, start_date: str, end_date: str) DataFrame
+        +fetch_index_data(code: str, start_date: str, end_date: str) DataFrame
+        +fetch_fundamental_data(code: str, report_type: str) DataFrame
+        +fetch_market_data(data_type: str, params: dict) DataFrame
+        -_call_api(func_name: str, params: dict) DataFrame
+        -_preprocess_data(data: DataFrame) DataFrame
+    }
+    
+    class DataProcessor {
+        +clean_data(data: DataFrame) DataFrame
+        +normalize_data(data: DataFrame) DataFrame
+        +calculate_technical_indicators(data: DataFrame, indicators: List) DataFrame
+        +resample_data(data: DataFrame, freq: str) DataFrame
+        +handle_missing_values(data: DataFrame, method: str) DataFrame
+        +adjust_for_corporate_actions(data: DataFrame) DataFrame
+    }
+    
+    class CacheManager {
+        -cache_store: dict
+        -db_connection: DatabaseConnection
+        +get_cached_data(key: str) DataFrame
+        +cache_data(key: str, data: DataFrame, ttl: int)
+        +invalidate_cache(key: str)
+        +refresh_cache(key: str)
+    }
+    
+    %% Strategy Module
+    class StrategyModule {
+        <<module>>
+        +initialize()
+        +get_strategies() List~Strategy~
+        +create_strategy(strategy_type: str, params: dict) Strategy
+        +save_strategy(strategy: Strategy) bool
+        +load_strategy(strategy_id: str) Strategy
+        +delete_strategy(strategy_id: str) bool
+    }
+    
+    class Strategy {
+        <<abstract>>
+        #strategy_id: str
+        #name: str
+        #description: str
+        #parameters: dict
+        #data_requirements: dict
+        +initialize(params: dict)
+        +generate_signals(data: DataFrame) DataFrame
+        +get_parameters() dict
+        +set_parameters(params: dict)
+        +validate() bool
+    }
+    
+    class TechnicalStrategy {
+        -indicators: List~str~
+        -rules: dict
+        +add_indicator(name: str, params: dict)
+        +add_rule(condition: str, action: str)
+        +generate_signals(data: DataFrame) DataFrame
+        -_calculate_indicators(data: DataFrame) DataFrame
+        -_apply_rules(data: DataFrame) DataFrame
+    }
+    
+    class FactorStrategy {
+        -factors: List~Factor~
+        -weighting_scheme: str
+        -rebalance_frequency: str
+        +add_factor(factor: Factor, weight: float)
+        +remove_factor(factor_name: str)
+        +set_weighting_scheme(scheme: str, params: dict)
+        +generate_signals(data: DataFrame) DataFrame
+        -_calculate_factor_values(data: DataFrame) DataFrame
+        -_combine_factors(factor_values: DataFrame) DataFrame
+    }
+    
+    class StatArbitrageStrategy {
+        -pairs: List~tuple~
+        -model: str
+        -entry_threshold: float
+        -exit_threshold: float
+        +set_pairs(pairs: List~tuple~)
+        +set_model(model_type: str, params: dict)
+        +generate_signals(data: DataFrame) DataFrame
+        -_calculate_spread(pair_data: DataFrame) Series
+        -_fit_model(spread_data: Series) object
+        -_generate_entry_exit_points(spread_data: Series, model: object) DataFrame
+    }
+    
+    class EventDrivenStrategy {
+        -events: List~str~
+        -event_window: dict
+        -filters: dict
+        +add_event(event_type: str, params: dict)
+        +set_event_window(pre_days: int, post_days: int)
+        +add_filter(filter_name: str, params: dict)
+        +generate_signals(data: DataFrame) DataFrame
+        -_detect_events(data: DataFrame) DataFrame
+        -_analyze_event_impact(data: DataFrame, events: DataFrame) DataFrame
+    }
+    
+    class MLStrategy {
+        -model_type: str
+        -features: List~str~
+        -target: str
+        -trained_model: object
+        +set_model(model_type: str, params: dict)
+        +add_features(features: List~str~)
+        +train(training_data: DataFrame)
+        +generate_signals(data: DataFrame) DataFrame
+        -_prepare_features(data: DataFrame) DataFrame
+        -_make_predictions(features: DataFrame) Series
+    }
+    
+    class Factor {
+        <<interface>>
+        +calculate(data: DataFrame) Series
+        +get_metadata() dict
+    }
+    
+    %% Backtesting Module
+    class BacktestModule {
+        <<module>>
+        +initialize()
+        +create_backtest(config: dict) Backtest
+        +run_backtest(backtest: Backtest) BacktestResult
+        +save_backtest_result(result: BacktestResult) str
+        +load_backtest_result(result_id: str) BacktestResult
+    }
+    
+    class Backtest {
+        -id: str
+        -strategy: Strategy
+        -data: DataFrame
+        -start_date: str
+        -end_date: str
+        -initial_capital: float
+        -trading_rules: TradingRules
+        -position_sizer: PositionSizer
+        +set_data(data: DataFrame)
+        +set_strategy(strategy: Strategy)
+        +set_parameters(params: dict)
+        +run() BacktestResult
+        -_process_signals(signals: DataFrame) DataFrame
+        -_simulate_trades(trades: DataFrame) TradeLog
+    }
+    
+    class TradingRules {
+        -market_type: str
+        -commission_model: CommissionModel
+        -slippage_model: SlippageModel
+        -trading_calendar: TradingCalendar
+        -price_limits: dict
+        -trading_constraints: dict
+        +validate_trade(trade: dict) bool
+        +apply_constraints(trades: DataFrame) DataFrame
+        +calculate_costs(trade: dict) float
+    }
+    
+    class CommissionModel {
+        -rate: float
+        -minimum: float
+        +calculate(trade: dict) float
+    }
+    
+    class SlippageModel {
+        -model_type: str
+        -parameters: dict
+        +calculate(trade: dict, market_data: DataFrame) float
+    }
+    
+    class TradingCalendar {
+        -calendar_data: DataFrame
+        +is_trading_day(date: str) bool
+        +get_trading_days(start: str, end: str) List~str~
+        +get_next_trading_day(date: str) str
+        +get_prev_trading_day(date: str) str
+    }
+    
+    class PositionSizer {
+        -method: str
+        -parameters: dict
+        +calculate_position_size(signal: dict, portfolio: Portfolio) float
+    }
+    
+    class BacktestResult {
+        -id: str
+        -strategy_id: str
+        -performance_metrics: dict
+        -trade_log: TradeLog
+        -equity_curve: DataFrame
+        -positions_history: DataFrame
+        +calculate_metrics() dict
+        +get_equity_curve() DataFrame
+        +get_trade_log() TradeLog
+        +get_drawdowns() DataFrame
+        +get_annual_returns() dict
+        +to_report() dict
+    }
+    
+    class TradeLog {
+        -trades: DataFrame
+        +get_trades() DataFrame
+        +get_win_rate() float
+        +get_profit_factor() float
+        +get_average_trade() float
+        +get_max_consecutive_losses() int
+    }
+    
+    %% Portfolio Module
+    class PortfolioModule {
+        <<module>>
+        +initialize()
+        +create_portfolio(name: str, initial_capital: float) Portfolio
+        +optimize_portfolio(portfolio: Portfolio, constraints: dict) Portfolio
+        +analyze_portfolio(portfolio: Portfolio) dict
+    }
+    
+    class Portfolio {
+        -id: str
+        -name: str
+        -holdings: dict
+        -cash: float
+        -initial_capital: float
+        +add_position(symbol: str, quantity: float, price: float)
+        +remove_position(symbol: str, quantity: float, price: float)
+        +get_value(price_data: DataFrame) float
+        +get_allocation() dict
+        +get_performance(price_data: DataFrame) DataFrame
+        +rebalance(target_allocation: dict, price_data: DataFrame)
+    }
+    
+    class RiskAnalyzer {
+        +calculate_volatility(returns: Series) float
+        +calculate_var(returns: Series, confidence: float) float
+        +calculate_cvar(returns: Series, confidence: float) float
+        +calculate_beta(returns: Series, benchmark: Series) float
+        +calculate_correlation_matrix(returns: DataFrame) DataFrame
+        +calculate_drawdowns(equity_curve: DataFrame) DataFrame
+    }
+    
+    class PortfolioOptimizer {
+        -method: str
+        -parameters: dict
+        +set_method(method: str, parameters: dict)
+        +optimize(returns: DataFrame, constraints: dict) dict
+        -_mean_variance_optimization(returns: DataFrame, constraints: dict) dict
+        -_risk_parity_optimization(returns: DataFrame, constraints: dict) dict
+        -_black_litterman_optimization(returns: DataFrame, views: dict, constraints: dict) dict
+    }
+    
+    %% Visualization Module
+    class VisualizationModule {
+        <<module>>
+        +initialize()
+        +create_data_chart(data: DataFrame, config: dict) Chart
+        +create_backtest_chart(result: BacktestResult, config: dict) Chart
+        +create_portfolio_chart(portfolio: Portfolio, config: dict) Chart
+        +export_report(data: dict, template: str) Report
+    }
+    
+    class Chart {
+        <<abstract>>
+        #chart_id: str
+        #title: str
+        #data: object
+        #config: dict
+        +render() dict
+        +update_data(data: object)
+        +update_config(config: dict)
+        +export(format: str) binary
+    }
+    
+    class TimeSeriesChart {
+        -x_axis: str
+        -y_axis: List~str~
+        -indicators: List~dict~
+        +add_indicator(name: str, data: Series, config: dict)
+        +add_event_marker(date: str, description: str, config: dict)
+        +render() dict
+    }
+    
+    class PerformanceChart {
+        -metrics: List~str~
+        -benchmarks: List~str~
+        +add_benchmark(name: str, data: Series)
+        +set_metrics(metrics: List~str~)
+        +render() dict
+    }
+    
+    class Report {
+        -sections: List~dict~
+        -metadata: dict
+        +add_section(title: str, content: object)
+        +add_chart(chart: Chart)
+        +add_table(table: DataFrame)
+        +set_metadata(metadata: dict)
+        +generate() binary
+    }
+    
+    %% User Interface Module (Frontend)
+    class UIModule {
+        <<module>>
+        +initialize()
+        +register_component(name: str, component: UIComponent)
+        +get_component(name: str) UIComponent
+        +render_dashboard(config: dict) dict
+    }
+    
+    class UIComponent {
+        <<interface>>
+        +render() dict
+        +handle_event(event: dict) dict
+    }
+    
+    class DataBrowser {
+        -data_sources: List~DataSource~
+        -filters: dict
+        -current_data: DataFrame
+        +set_data_source(source: DataSource)
+        +set_filters(filters: dict)
+        +refresh_data()
+        +export_data(format: str) binary
+        +render() dict
+        +handle_event(event: dict) dict
+    }
+    
+    class StrategyBuilder {
+        -strategy_types: List~str~
+        -current_strategy: Strategy
+        -parameters: dict
+        +create_strategy(type: str)
+        +update_parameters(params: dict)
+        +validate_strategy() bool
+        +save_strategy() str
+        +load_strategy(strategy_id: str)
+        +render() dict
+        +handle_event(event: dict) dict
+    }
+    
+    class BacktestRunner {
+        -backtest_module: BacktestModule
+        -current_backtest: Backtest
+        -backtest_config: dict
+        +set_strategy(strategy: Strategy)
+        +set_data(data: DataFrame)
+        +set_config(config: dict)
+        +run_backtest() BacktestResult
+        +render() dict
+        +handle_event(event: dict) dict
+    }
+    
+    class PortfolioManager {
+        -portfolio_module: PortfolioModule
+        -current_portfolio: Portfolio
+        -price_data: DataFrame
+        +create_portfolio(name: str, capital: float)
+        +update_portfolio(updates: dict)
+        +analyze_portfolio() dict
+        +optimize_portfolio(constraints: dict) dict
+        +render() dict
+        +handle_event(event: dict) dict
+    }
+    
+    %% Relationships
+    System "1" *-- "1" DataModule
+    System "1" *-- "1" StrategyModule
+    System "1" *-- "1" BacktestModule
+    System "1" *-- "1" PortfolioModule
+    System "1" *-- "1" VisualizationModule
+    System "1" *-- "1" UIModule
+    
+    DataModule "1" *-- "*" DataSource
+    DataSource <|-- AKShareDataSource
+    AKShareDataSource "1" -- "1" DataProcessor
+    AKShareDataSource "1" -- "1" CacheManager
+    
+    StrategyModule "1" *-- "*" Strategy
+    Strategy <|-- TechnicalStrategy
+    Strategy <|-- FactorStrategy
+    Strategy <|-- StatArbitrageStrategy
+    Strategy <|-- EventDrivenStrategy
+    Strategy <|-- MLStrategy
+    FactorStrategy "1" *-- "*" Factor
+    
+    BacktestModule "1" *-- "*" Backtest
+    Backtest "1" -- "1" Strategy
+    Backtest "1" -- "1" TradingRules
+    Backtest "1" -- "1" PositionSizer
+    Backtest "1" *-- "1" BacktestResult
+    BacktestResult "1" *-- "1" TradeLog
+    TradingRules "1" *-- "1" CommissionModel
+    TradingRules "1" *-- "1" SlippageModel
+    TradingRules "1" *-- "1" TradingCalendar
+    
+    PortfolioModule "1" *-- "*" Portfolio
+    PortfolioModule "1" *-- "1" RiskAnalyzer
+    PortfolioModule "1" *-- "1" PortfolioOptimizer
+    
+    VisualizationModule "1" *-- "*" Chart
+    Chart <|-- TimeSeriesChart
+    Chart <|-- PerformanceChart
+    VisualizationModule "1" *-- "*" Report
+    
+    UIModule "1" *-- "*" UIComponent
+    UIComponent <|-- DataBrowser
+    UIComponent <|-- StrategyBuilder
+    UIComponent <|-- BacktestRunner
+    UIComponent <|-- PortfolioManager
+    DataBrowser "1" -- "*" DataSource
+    StrategyBuilder "1" -- "1" Strategy
+    BacktestRunner "1" -- "1" BacktestModule
+    PortfolioManager "1" -- "1" PortfolioModule

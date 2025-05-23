@@ -1,0 +1,132 @@
+{
+  "title": "AKShare Quantitative Analysis Platform - Sequence Diagrams",
+  "workflows": [
+    {
+      "name": "Data Retrieval and Processing",
+      "actors": ["User", "UI Interface", "DataModule", "VisualizationModule"],
+      "sequence": [
+        {"from": "User", "to": "UI Interface", "message": "Request market data"},
+        {"from": "UI Interface", "to": "DataModule", "message": "get_data_source(\"AKShare\")"},
+        {"from": "DataModule", "to": "UI Interface", "message": "Return AKShareDataSource", "type": "return"},
+        {"from": "UI Interface", "to": "DataModule", "message": "fetch_stock_data(code, start_date, end_date)"},
+        {"from": "DataModule", "to": "DataModule", "message": "Check cache for data", "type": "self"},
+        {"from": "DataModule", "to": "DataModule", "message": "_call_api(\"stock_zh_a_hist\", params)", "type": "self", "condition": "Data not in cache"},
+        {"from": "DataModule", "to": "DataModule", "message": "_preprocess_data(raw_data)", "type": "self", "condition": "Data not in cache"},
+        {"from": "DataModule", "to": "DataModule", "message": "cache_data(key, processed_data)", "type": "self", "condition": "Data not in cache"},
+        {"from": "DataModule", "to": "UI Interface", "message": "Return processed DataFrame", "type": "return"},
+        {"from": "UI Interface", "to": "DataModule", "message": "calculate_technical_indicators(data, indicators)"},
+        {"from": "DataModule", "to": "UI Interface", "message": "Return data with indicators", "type": "return"},
+        {"from": "UI Interface", "to": "VisualizationModule", "message": "create_data_chart(data, config)"},
+        {"from": "VisualizationModule", "to": "UI Interface", "message": "Return chart object", "type": "return"},
+        {"from": "UI Interface", "to": "User", "message": "Display data visualization", "type": "return"}
+      ]
+    },
+    {
+      "name": "Strategy Development",
+      "actors": ["User", "UI Interface", "StrategyModule", "DataModule", "VisualizationModule"],
+      "sequence": [
+        {"from": "User", "to": "UI Interface", "message": "Create new strategy"},
+        {"from": "UI Interface", "to": "StrategyModule", "message": "create_strategy(strategy_type, initial_params)"},
+        {"from": "StrategyModule", "to": "StrategyModule", "message": "Instantiate strategy object", "type": "self"},
+        {"from": "StrategyModule", "to": "UI Interface", "message": "Return strategy object", "type": "return"},
+        {"from": "User", "to": "UI Interface", "message": "Configure strategy parameters"},
+        {"from": "UI Interface", "to": "StrategyModule", "message": "set_parameters(params)"},
+        {"from": "StrategyModule", "to": "UI Interface", "message": "Confirm parameters set", "type": "return"},
+        {"from": "User", "to": "UI Interface", "message": "Request data for strategy testing"},
+        {"from": "UI Interface", "to": "DataModule", "message": "fetch_market_data(data_type, params)"},
+        {"from": "DataModule", "to": "UI Interface", "message": "Return market data", "type": "return"},
+        {"from": "UI Interface", "to": "StrategyModule", "message": "generate_signals(data)"},
+        {"from": "StrategyModule", "to": "StrategyModule", "message": "Apply strategy logic", "type": "self"},
+        {"from": "StrategyModule", "to": "UI Interface", "message": "Return signals DataFrame", "type": "return"},
+        {"from": "UI Interface", "to": "VisualizationModule", "message": "create_chart(signals, config)"},
+        {"from": "VisualizationModule", "to": "UI Interface", "message": "Return signal chart", "type": "return"},
+        {"from": "UI Interface", "to": "User", "message": "Display strategy signals", "type": "return"},
+        {"from": "User", "to": "UI Interface", "message": "Save strategy"},
+        {"from": "UI Interface", "to": "StrategyModule", "message": "save_strategy(strategy)"},
+        {"from": "StrategyModule", "to": "StrategyModule", "message": "Persist strategy to storage", "type": "self"},
+        {"from": "StrategyModule", "to": "UI Interface", "message": "Confirm strategy saved", "type": "return"},
+        {"from": "UI Interface", "to": "User", "message": "Confirm strategy saved", "type": "return"}
+      ]
+    },
+    {
+      "name": "Backtesting Execution",
+      "actors": ["User", "UI Interface", "BacktestModule", "StrategyModule", "DataModule", "VisualizationModule"],
+      "sequence": [
+        {"from": "User", "to": "UI Interface", "message": "Start backtest"},
+        {"from": "UI Interface", "to": "BacktestModule", "message": "create_backtest(config)"},
+        {"from": "BacktestModule", "to": "BacktestModule", "message": "Initialize Backtest object", "type": "self"},
+        {"from": "BacktestModule", "to": "UI Interface", "message": "Return backtest object", "type": "return"},
+        {"from": "UI Interface", "to": "StrategyModule", "message": "load_strategy(strategy_id)"},
+        {"from": "StrategyModule", "to": "UI Interface", "message": "Return strategy object", "type": "return"},
+        {"from": "UI Interface", "to": "DataModule", "message": "fetch_stock_data(stocks, start_date, end_date)"},
+        {"from": "DataModule", "to": "UI Interface", "message": "Return historical data", "type": "return"},
+        {"from": "UI Interface", "to": "BacktestModule", "message": "set_strategy(strategy)"},
+        {"from": "BacktestModule", "to": "UI Interface", "message": "Confirm strategy set", "type": "return"},
+        {"from": "UI Interface", "to": "BacktestModule", "message": "set_data(data)"},
+        {"from": "BacktestModule", "to": "UI Interface", "message": "Confirm data set", "type": "return"},
+        {"from": "UI Interface", "to": "BacktestModule", "message": "run_backtest()"},
+        {"from": "BacktestModule", "to": "BacktestModule", "message": "Process strategy signals", "type": "self"},
+        {"from": "BacktestModule", "to": "BacktestModule", "message": "Simulate trades with trading rules", "type": "self"},
+        {"from": "BacktestModule", "to": "BacktestModule", "message": "Calculate performance metrics", "type": "self"},
+        {"from": "BacktestModule", "to": "BacktestModule", "message": "Generate BacktestResult", "type": "self"},
+        {"from": "BacktestModule", "to": "UI Interface", "message": "Return backtest results", "type": "return"},
+        {"from": "UI Interface", "to": "VisualizationModule", "message": "create_backtest_chart(result, config)"},
+        {"from": "VisualizationModule", "to": "VisualizationModule", "message": "Generate performance charts", "type": "self"},
+        {"from": "VisualizationModule", "to": "UI Interface", "message": "Return visualization", "type": "return"},
+        {"from": "UI Interface", "to": "User", "message": "Display backtest results", "type": "return"}
+      ]
+    },
+    {
+      "name": "Portfolio Management",
+      "actors": ["User", "UI Interface", "PortfolioModule", "BacktestModule", "VisualizationModule"],
+      "sequence": [
+        {"from": "User", "to": "UI Interface", "message": "Create portfolio"},
+        {"from": "UI Interface", "to": "PortfolioModule", "message": "create_portfolio(name, initial_capital)"},
+        {"from": "PortfolioModule", "to": "PortfolioModule", "message": "Initialize Portfolio object", "type": "self"},
+        {"from": "PortfolioModule", "to": "UI Interface", "message": "Return portfolio object", "type": "return"},
+        {"from": "User", "to": "UI Interface", "message": "Add positions from backtest"},
+        {"from": "UI Interface", "to": "BacktestModule", "message": "load_backtest_result(result_id)"},
+        {"from": "BacktestModule", "to": "UI Interface", "message": "Return backtest result", "type": "return"},
+        {"from": "UI Interface", "to": "PortfolioModule", "message": "add_positions(positions)"},
+        {"from": "PortfolioModule", "to": "UI Interface", "message": "Confirm positions added", "type": "return"},
+        {"from": "User", "to": "UI Interface", "message": "Run risk analysis"},
+        {"from": "UI Interface", "to": "PortfolioModule", "message": "analyze_portfolio(portfolio)"},
+        {"from": "PortfolioModule", "to": "PortfolioModule", "message": "Calculate risk metrics", "type": "self"},
+        {"from": "PortfolioModule", "to": "UI Interface", "message": "Return risk analysis", "type": "return"},
+        {"from": "UI Interface", "to": "VisualizationModule", "message": "create_portfolio_chart(analysis, config)"},
+        {"from": "VisualizationModule", "to": "UI Interface", "message": "Return risk charts", "type": "return"},
+        {"from": "UI Interface", "to": "User", "message": "Display risk analysis", "type": "return"},
+        {"from": "User", "to": "UI Interface", "message": "Optimize portfolio"},
+        {"from": "UI Interface", "to": "PortfolioModule", "message": "optimize_portfolio(portfolio, constraints)"},
+        {"from": "PortfolioModule", "to": "PortfolioModule", "message": "Run optimization algorithm", "type": "self"},
+        {"from": "PortfolioModule", "to": "UI Interface", "message": "Return optimized allocation", "type": "return"},
+        {"from": "UI Interface", "to": "VisualizationModule", "message": "create_chart(allocation, config)"},
+        {"from": "VisualizationModule", "to": "UI Interface", "message": "Return allocation chart", "type": "return"},
+        {"from": "UI Interface", "to": "User", "message": "Display optimized portfolio", "type": "return"}
+      ]
+    },
+    {
+      "name": "System Initialization",
+      "actors": ["User", "UI Interface", "DataModule", "StrategyModule", "BacktestModule", "PortfolioModule", "VisualizationModule"],
+      "sequence": [
+        {"from": "User", "to": "UI Interface", "message": "Launch application"},
+        {"from": "UI Interface", "to": "DataModule", "message": "initialize()"},
+        {"from": "DataModule", "to": "DataModule", "message": "Register data sources", "type": "self"},
+        {"from": "DataModule", "to": "UI Interface", "message": "Confirm initialization", "type": "return"},
+        {"from": "UI Interface", "to": "StrategyModule", "message": "initialize()"},
+        {"from": "StrategyModule", "to": "StrategyModule", "message": "Load strategy templates", "type": "self"},
+        {"from": "StrategyModule", "to": "UI Interface", "message": "Confirm initialization", "type": "return"},
+        {"from": "UI Interface", "to": "BacktestModule", "message": "initialize()"},
+        {"from": "BacktestModule", "to": "BacktestModule", "message": "Configure backtesting engine", "type": "self"},
+        {"from": "BacktestModule", "to": "UI Interface", "message": "Confirm initialization", "type": "return"},
+        {"from": "UI Interface", "to": "PortfolioModule", "message": "initialize()"},
+        {"from": "PortfolioModule", "to": "PortfolioModule", "message": "Setup risk models", "type": "self"},
+        {"from": "PortfolioModule", "to": "UI Interface", "message": "Confirm initialization", "type": "return"},
+        {"from": "UI Interface", "to": "VisualizationModule", "message": "initialize()"},
+        {"from": "VisualizationModule", "to": "VisualizationModule", "message": "Register chart templates", "type": "self"},
+        {"from": "VisualizationModule", "to": "UI Interface", "message": "Confirm initialization", "type": "return"},
+        {"from": "UI Interface", "to": "User", "message": "Application ready", "type": "return"}
+      ]
+    }
+  ]
+}
